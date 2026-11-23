@@ -12,27 +12,23 @@ enum AppTab: Hashable {
 /// Contenedor principal de navegación basado en barra de pestañas (`TabView`).
 struct MainTabView: View {
     @State private var selectedTab: AppTab = .dashboard
+    @State private var inventoryViewModel = InventoryViewModel()
 
     var body: some View {
         TabView(selection: $selectedTab) {
             Tab("Resumen", systemImage: "square.grid.2x2.fill", value: AppTab.dashboard) {
-                DashboardView(selectedTab: $selectedTab)
+                DashboardView(
+                    selectedTab: $selectedTab,
+                    onFilterInventory: openInventory(status:category:)
+                )
             }
 
             Tab("Inventario", systemImage: "laptopcomputer.and.iphone", value: AppTab.inventory) {
-                UpcomingFeaturePlaceholderView(
-                    title: "Inventario",
-                    symbolName: "laptopcomputer.and.iphone",
-                    stepDescription: "En el Paso 4 construiremos el catálogo completo con buscador por serie, filtros por categoría/estado y registro de equipos."
-                )
+                InventoryListView(viewModel: inventoryViewModel)
             }
 
             Tab("Usuarios", systemImage: "person.2.fill", value: AppTab.employees) {
-                UpcomingFeaturePlaceholderView(
-                    title: "Usuarios",
-                    symbolName: "person.2.fill",
-                    stepDescription: "En el Paso 5 construiremos el directorio de usuarios, la asignación de equipos y el historial de entregas."
-                )
+                EmployeeListView()
             }
 
             Tab("Escanear", systemImage: "qrcode.viewfinder", value: AppTab.scanner) {
@@ -43,6 +39,14 @@ struct MainTabView: View {
                 )
             }
         }
+    }
+
+    /// Navega a la pestaña de Inventario aplicando automáticamente el filtro elegido desde el Dashboard.
+    private func openInventory(status: EquipmentStatus?, category: EquipmentCategory?) {
+        inventoryViewModel.searchText = ""
+        inventoryViewModel.selectedStatus = status
+        inventoryViewModel.selectedCategory = category
+        selectedTab = .inventory
     }
 }
 

@@ -68,12 +68,11 @@ struct InventoryListView: View {
                 List {
                     Section {
                         ForEach(filteredItems) { equipment in
-                            Button {
-                                equipmentToEdit = equipment
+                            NavigationLink {
+                                EquipmentDetailView(equipment: equipment)
                             } label: {
                                 EquipmentRowView(equipment: equipment)
                             }
-                            .buttonStyle(.plain)
                             .swipeActions(edge: .trailing, allowsFullSwipe: false) {
                                 Button(role: .destructive) {
                                     deleteEquipment(equipment)

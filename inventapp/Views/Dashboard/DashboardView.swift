@@ -8,6 +8,9 @@ struct DashboardView: View {
     /// para que los botones de acceso rápido puedan cambiar de pestaña.
     @Binding var selectedTab: AppTab
 
+    /// Acción opcional que permite abrir la pestaña Inventario con un filtro ya aplicado.
+    var onFilterInventory: ((EquipmentStatus?, EquipmentCategory?) -> Void)? = nil
+
     /// `@Environment(\.modelContext)` nos da acceso a la base de datos para insertar o guardar cambios.
     @Environment(\.modelContext) private var modelContext
 
@@ -97,37 +100,57 @@ struct DashboardView: View {
             sectionHeader(title: "Estado del Inventario")
 
             LazyVGrid(columns: gridColumns, spacing: 12) {
-                StatCardView(
-                    title: "Total Equipos",
-                    value: totalCount,
-                    subtitle: "\(employees.count) usuarios registrados",
-                    symbolName: "shippingbox.fill",
-                    tintColor: .indigo
-                )
+                Button {
+                    onFilterInventory?(nil, nil)
+                } label: {
+                    StatCardView(
+                        title: "Total Equipos",
+                        value: totalCount,
+                        subtitle: "\(employees.count) usuarios registrados",
+                        symbolName: "shippingbox.fill",
+                        tintColor: .indigo
+                    )
+                }
+                .buttonStyle(.plain)
 
-                StatCardView(
-                    title: "Disponibles",
-                    value: availableCount,
-                    subtitle: percentageText(for: availableCount),
-                    symbolName: EquipmentStatus.available.symbolName,
-                    tintColor: EquipmentStatus.available.tintColor
-                )
+                Button {
+                    onFilterInventory?(.available, nil)
+                } label: {
+                    StatCardView(
+                        title: "Disponibles",
+                        value: availableCount,
+                        subtitle: percentageText(for: availableCount),
+                        symbolName: EquipmentStatus.available.symbolName,
+                        tintColor: EquipmentStatus.available.tintColor
+                    )
+                }
+                .buttonStyle(.plain)
 
-                StatCardView(
-                    title: "Entregados",
-                    value: assignedCount,
-                    subtitle: percentageText(for: assignedCount),
-                    symbolName: EquipmentStatus.assigned.symbolName,
-                    tintColor: EquipmentStatus.assigned.tintColor
-                )
+                Button {
+                    onFilterInventory?(.assigned, nil)
+                } label: {
+                    StatCardView(
+                        title: "Entregados",
+                        value: assignedCount,
+                        subtitle: percentageText(for: assignedCount),
+                        symbolName: EquipmentStatus.assigned.symbolName,
+                        tintColor: EquipmentStatus.assigned.tintColor
+                    )
+                }
+                .buttonStyle(.plain)
 
-                StatCardView(
-                    title: "Mantenimiento",
-                    value: maintenanceCount,
-                    subtitle: maintenanceCount == 0 ? "Todo operativo" : "En revisión técnica",
-                    symbolName: EquipmentStatus.maintenance.symbolName,
-                    tintColor: EquipmentStatus.maintenance.tintColor
-                )
+                Button {
+                    onFilterInventory?(.maintenance, nil)
+                } label: {
+                    StatCardView(
+                        title: "Mantenimiento",
+                        value: maintenanceCount,
+                        subtitle: maintenanceCount == 0 ? "Todo operativo" : "En revisión técnica",
+                        symbolName: EquipmentStatus.maintenance.symbolName,
+                        tintColor: EquipmentStatus.maintenance.tintColor
+                    )
+                }
+                .buttonStyle(.plain)
             }
         }
     }
@@ -210,38 +233,47 @@ struct DashboardView: View {
                     let assigned = items.filter { $0.isAssigned }.count
                     let ratio = totalCount > 0 ? Double(items.count) / Double(totalCount) : 0
 
-                    VStack(spacing: 8) {
-                        HStack(spacing: 12) {
-                            Image(systemName: category.symbolName)
-                                .font(.body.weight(.semibold))
-                                .foregroundStyle(category.tintColor)
-                                .frame(width: 34, height: 34)
-                                .background(
-                                    category.tintColor.opacity(0.14),
-                                    in: RoundedRectangle(cornerRadius: 10, style: .continuous)
-                                )
+                    Button {
+                        onFilterInventory?(nil, category)
+                    } label: {
+                        VStack(spacing: 8) {
+                            HStack(spacing: 12) {
+                                Image(systemName: category.symbolName)
+                                    .font(.body.weight(.semibold))
+                                    .foregroundStyle(category.tintColor)
+                                    .frame(width: 34, height: 34)
+                                    .background(
+                                        category.tintColor.opacity(0.14),
+                                        in: RoundedRectangle(cornerRadius: 10, style: .continuous)
+                                    )
 
-                            VStack(alignment: .leading, spacing: 2) {
-                                Text(category.pluralName)
-                                    .font(.subheadline.weight(.semibold))
+                                VStack(alignment: .leading, spacing: 2) {
+                                    Text(category.pluralName)
+                                        .font(.subheadline.weight(.semibold))
+                                        .foregroundStyle(.primary)
+
+                                    Text("\(available) disp. • \(assigned) entregados")
+                                        .font(.caption)
+                                        .foregroundStyle(.secondary)
+                                }
+
+                                Spacer()
+
+                                Text("\(items.count)")
+                                    .font(.system(.headline, design: .rounded, weight: .bold))
                                     .foregroundStyle(.primary)
 
-                                Text("\(available) disp. • \(assigned) entregados")
-                                    .font(.caption)
-                                    .foregroundStyle(.secondary)
+                                Image(systemName: "chevron.right")
+                                    .font(.caption.weight(.semibold))
+                                    .foregroundStyle(.tertiary)
                             }
 
-                            Spacer()
-
-                            Text("\(items.count)")
-                                .font(.system(.headline, design: .rounded, weight: .bold))
-                                .foregroundStyle(.primary)
+                            // Barra de proporción visual
+                            ProgressView(value: ratio)
+                                .tint(category.tintColor)
                         }
-
-                        // Barra de proporción visual
-                        ProgressView(value: ratio)
-                            .tint(category.tintColor)
                     }
+                    .buttonStyle(.plain)
 
                     if category != EquipmentCategory.allCases.last {
                         Divider()
@@ -275,9 +307,15 @@ struct DashboardView: View {
 
             VStack(spacing: 0) {
                 ForEach(recentEquipment) { item in
-                    EquipmentRowView(equipment: item)
-                        .padding(.horizontal, 16)
-                        .padding(.vertical, 10)
+                    NavigationLink {
+                        EquipmentDetailView(equipment: item)
+                    } label: {
+                        EquipmentRowView(equipment: item)
+                            .padding(.horizontal, 16)
+                            .padding(.vertical, 10)
+                            .contentShape(Rectangle())
+                    }
+                    .buttonStyle(.plain)
 
                     if item.id != recentEquipment.last?.id {
                         Divider()
