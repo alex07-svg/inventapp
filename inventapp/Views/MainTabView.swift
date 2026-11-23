@@ -32,11 +32,7 @@ struct MainTabView: View {
             }
 
             Tab("Escanear", systemImage: "qrcode.viewfinder", value: AppTab.scanner) {
-                UpcomingFeaturePlaceholderView(
-                    title: "Escáner QR",
-                    symbolName: "qrcode.viewfinder",
-                    stepDescription: "En el Paso 6 integraremos la cámara para leer códigos QR de equipos y un modo simulado para probar en Xcode."
-                )
+                QRScannerView()
             }
         }
     }
@@ -47,24 +43,6 @@ struct MainTabView: View {
         inventoryViewModel.selectedStatus = status
         inventoryViewModel.selectedCategory = category
         selectedTab = .inventory
-    }
-}
-
-/// Vista temporal amigable para las pestañas que iremos completando en los próximos pasos.
-private struct UpcomingFeaturePlaceholderView: View {
-    let title: String
-    let symbolName: String
-    let stepDescription: String
-
-    var body: some View {
-        NavigationStack {
-            ContentUnavailableView(
-                title,
-                systemImage: symbolName,
-                description: Text(stepDescription)
-            )
-            .navigationTitle(title)
-        }
     }
 }
 

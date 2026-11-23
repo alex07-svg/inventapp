@@ -23,6 +23,7 @@ struct EquipmentFormView: View {
     @State private var status: EquipmentStatus = .available
     @State private var notes: String = ""
 
+    @State private var isShowingQRScanner = false
     @State private var errorMessage: String?
 
     init(equipmentToEdit: Equipment? = nil, initialSerialNumber: String? = nil) {
@@ -108,6 +109,16 @@ struct EquipmentFormView: View {
                             .textInputAutocapitalization(.characters)
                             .autocorrectionDisabled()
 
+                        Button {
+                            isShowingQRScanner = true
+                        } label: {
+                            Image(systemName: "qrcode.viewfinder")
+                                .font(.body.weight(.semibold))
+                        }
+                        .buttonStyle(.bordered)
+                        .controlSize(.small)
+                        .accessibilityLabel("Escanear número de serie con QR")
+
                         if !isEditing {
                             Button("Sugerir") {
                                 serialNumber = InventoryViewModel.suggestedSerialNumber(for: category)
@@ -166,6 +177,11 @@ struct EquipmentFormView: View {
                     }
                     .fontWeight(.semibold)
                     .disabled(!canSave)
+                }
+            }
+            .sheet(isPresented: $isShowingQRScanner) {
+                QRSerialScannerSheet { capturedSerial in
+                    serialNumber = capturedSerial
                 }
             }
             .alert("No se pudo guardar", isPresented: Binding(

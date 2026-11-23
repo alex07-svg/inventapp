@@ -12,6 +12,7 @@ struct EquipmentDetailView: View {
 
     @State private var isShowingEditSheet = false
     @State private var isShowingAssignSheet = false
+    @State private var isShowingQRSheet = false
     @State private var isShowingReturnConfirmation = false
     @State private var isShowingDeleteAlert = false
     @State private var copiedSerialFeedback = false
@@ -50,6 +51,14 @@ struct EquipmentDetailView: View {
         .navigationBarTitleDisplayMode(.inline)
         .toolbar {
             ToolbarItem(placement: .topBarTrailing) {
+                Button {
+                    isShowingQRSheet = true
+                } label: {
+                    Label("Ver código QR", systemImage: "qrcode")
+                }
+            }
+
+            ToolbarItem(placement: .topBarTrailing) {
                 Button("Editar") {
                     isShowingEditSheet = true
                 }
@@ -60,6 +69,9 @@ struct EquipmentDetailView: View {
         }
         .sheet(isPresented: $isShowingAssignSheet) {
             AssignEquipmentSheet(equipment: equipment)
+        }
+        .sheet(isPresented: $isShowingQRSheet) {
+            EquipmentQRLabelSheet(equipment: equipment)
         }
         .confirmationDialog(
             "Registrar devolución",
